@@ -1,0 +1,20 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f6f7fb;
+  font-family: 'IBM Plex Sans Thai', 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}

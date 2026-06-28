@@ -1,0 +1,435 @@
+{
+  "source_image": "/mnt/data/a_clean_flat_ui_screenshot_scene_of_a_web_app_dash.png",
+  "source_size_px": [
+    1044,
+    1507
+  ],
+  "notes": "PNG element exports for ProHub list screen, sliced from generated screen. Folders include 1x and 2x scaled assets.",
+  "elements": [
+    {
+      "name": "00_full_screen",
+      "crop_box_px": [
+        0,
+        0,
+        1044,
+        1507
+      ],
+      "size_1x_px": [
+        1044,
+        1507
+      ],
+      "size_2x_px": [
+        2088,
+        3014
+      ]
+    },
+    {
+      "name": "01_logo_prohub",
+      "crop_box_px": [
+        28,
+        18,
+        120,
+        48
+      ],
+      "size_1x_px": [
+        92,
+        30
+      ],
+      "size_2x_px": [
+        184,
+        60
+      ]
+    },
+    {
+      "name": "02_sidebar_full",
+      "crop_box_px": [
+        0,
+        0,
+        147,
+        1507
+      ],
+      "size_1x_px": [
+        147,
+        1507
+      ],
+      "size_2x_px": [
+        294,
+        3014
+      ]
+    },
+    {
+      "name": "03_sidebar_nav_active",
+      "crop_box_px": [
+        10,
+        55,
+        134,
+        88
+      ],
+      "size_1x_px": [
+        124,
+        33
+      ],
+      "size_2x_px": [
+        248,
+        66
+      ]
+    },
+    {
+      "name": "04_header_title_meta",
+      "crop_box_px": [
+        165,
+        20,
+        1000,
+        86
+      ],
+      "size_1x_px": [
+        835,
+        66
+      ],
+      "size_2x_px": [
+        1670,
+        132
+      ]
+    },
+    {
+      "name": "05_status_legend_bar",
+      "crop_box_px": [
+        166,
+        94,
+        1000,
+        131
+      ],
+      "size_1x_px": [
+        834,
+        37
+      ],
+      "size_2x_px": [
+        1668,
+        74
+      ]
+    },
+    {
+      "name": "06_tab_bar",
+      "crop_box_px": [
+        165,
+        141,
+        607,
+        172
+      ],
+      "size_1x_px": [
+        442,
+        31
+      ],
+      "size_2x_px": [
+        884,
+        62
+      ]
+    },
+    {
+      "name": "07_action_buttons",
+      "crop_box_px": [
+        785,
+        177,
+        1000,
+        207
+      ],
+      "size_1x_px": [
+        215,
+        30
+      ],
+      "size_2x_px": [
+        430,
+        60
+      ]
+    },
+    {
+      "name": "08_filter_panel",
+      "crop_box_px": [
+        166,
+        213,
+        1000,
+        373
+      ],
+      "size_1x_px": [
+        834,
+        160
+      ],
+      "size_2x_px": [
+        1668,
+        320
+      ]
+    },
+    {
+      "name": "09_filter_search_input",
+      "crop_box_px": [
+        178,
+        239,
+        392,
+        270
+      ],
+      "size_1x_px": [
+        214,
+        31
+      ],
+      "size_2x_px": [
+        428,
+        62
+      ]
+    },
+    {
+      "name": "10_filter_select_group",
+      "crop_box_px": [
+        404,
+        239,
+        585,
+        270
+      ],
+      "size_1x_px": [
+        181,
+        31
+      ],
+      "size_2x_px": [
+        362,
+        62
+      ]
+    },
+    {
+      "name": "11_filter_footer_buttons",
+      "crop_box_px": [
+        820,
+        333,
+        982,
+        362
+      ],
+      "size_1x_px": [
+        162,
+        29
+      ],
+      "size_2x_px": [
+        324,
+        58
+      ]
+    },
+    {
+      "name": "12_foundation_card",
+      "crop_box_px": [
+        166,
+        381,
+        1000,
+        558
+      ],
+      "size_1x_px": [
+        834,
+        177
+      ],
+      "size_2x_px": [
+        1668,
+        354
+      ]
+    },
+    {
+      "name": "13_po_receipt_card",
+      "crop_box_px": [
+        166,
+        566,
+        1000,
+        741
+      ],
+      "size_1x_px": [
+        834,
+        175
+      ],
+      "size_2x_px": [
+        1668,
+        350
+      ]
+    },
+    {
+      "name": "14_other_receipt_card",
+      "crop_box_px": [
+        166,
+        749,
+        1000,
+        880
+      ],
+      "size_1x_px": [
+        834,
+        131
+      ],
+      "size_2x_px": [
+        1668,
+        262
+      ]
+    },
+    {
+      "name": "15_transfer_card",
+      "crop_box_px": [
+        166,
+        888,
+        1000,
+        1005
+      ],
+      "size_1x_px": [
+        834,
+        117
+      ],
+      "size_2x_px": [
+        1668,
+        234
+      ]
+    },
+    {
+      "name": "16_job_operation_card",
+      "crop_box_px": [
+        166,
+        1013,
+        1000,
+        1134
+      ],
+      "size_1x_px": [
+        834,
+        121
+      ],
+      "size_2x_px": [
+        1668,
+        242
+      ]
+    },
+    {
+      "name": "17_shipment_card",
+      "crop_box_px": [
+        166,
+        1142,
+        1000,
+        1241
+      ],
+      "size_1x_px": [
+        834,
+        99
+      ],
+      "size_2x_px": [
+        1668,
+        198
+      ]
+    },
+    {
+      "name": "18_cycle_count_card",
+      "crop_box_px": [
+        166,
+        1249,
+        1000,
+        1355
+      ],
+      "size_1x_px": [
+        834,
+        106
+      ],
+      "size_2x_px": [
+        1668,
+        212
+      ]
+    },
+    {
+      "name": "19_writeoff_nc_card",
+      "crop_box_px": [
+        166,
+        1363,
+        1000,
+        1465
+      ],
+      "size_1x_px": [
+        834,
+        102
+      ],
+      "size_2x_px": [
+        1668,
+        204
+      ]
+    },
+    {
+      "name": "20_table_header_example",
+      "crop_box_px": [
+        178,
+        424,
+        982,
+        448
+      ],
+      "size_1x_px": [
+        804,
+        24
+      ],
+      "size_2x_px": [
+        1608,
+        48
+      ]
+    },
+    {
+      "name": "21_table_row_example",
+      "crop_box_px": [
+        178,
+        448,
+        982,
+        473
+      ],
+      "size_1x_px": [
+        804,
+        25
+      ],
+      "size_2x_px": [
+        1608,
+        50
+      ]
+    },
+    {
+      "name": "22_status_badges_examples",
+      "crop_box_px": [
+        627,
+        447,
+        765,
+        520
+      ],
+      "size_1x_px": [
+        138,
+        73
+      ],
+      "size_2x_px": [
+        276,
+        146
+      ]
+    },
+    {
+      "name": "23_pagination",
+      "crop_box_px": [
+        442,
+        1460,
+        710,
+        1490
+      ],
+      "size_1x_px": [
+        268,
+        30
+      ],
+      "size_2x_px": [
+        536,
+        60
+      ]
+    },
+    {
+      "name": "24_footer_links",
+      "crop_box_px": [
+        818,
+        1467,
+        1000,
+        1498
+      ],
+      "size_1x_px": [
+        182,
+        31
+      ],
+      "size_2x_px": [
+        364,
+        62
+      ]
+    }
+  ]
+}
