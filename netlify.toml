@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+
+[build.environment]
+  # React 19 / Mantine 7 peer-dep mismatch — matches the local install in the README.
+  NPM_FLAGS = "--legacy-peer-deps"
+  NODE_VERSION = "20"
+
+# No `publish` or `functions` directory is set on purpose: Netlify auto-detects
+# Next.js and installs its official Next.js Runtime (@netlify/plugin-nextjs),
+# which wires Route Handlers, Server Actions, and Netlify Blobs automatically.

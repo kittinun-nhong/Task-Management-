@@ -15,6 +15,23 @@ npm run dev          # http://localhost:3000
 
 `npm run typecheck` runs `tsc --noEmit` (the "are the contracts in sync" check — no codegen).
 
+## Deploy (Netlify)
+
+Connect the repo in Netlify — it auto-detects Next.js and installs the official Next.js Runtime
+(`@netlify/plugin-nextjs`), which serves the Route Handlers and Server Actions as functions. The
+build settings live in [`netlify.toml`](./netlify.toml); `NPM_FLAGS=--legacy-peer-deps` is required
+(same reason as the local install).
+
+**Persistence:** Netlify functions have an ephemeral filesystem, so in production the store switches
+from the local `data.json` to **Netlify Blobs** automatically (`lib/server/db/json-store.ts` checks
+`process.env.NETLIFY`). Data lives in the `prohub-db` store under key `data`, auto-seeded from
+`seed.ts` on the first request and persisted across deploys/cold starts. No env vars or dashboard
+setup needed — Blobs is wired by the Next.js Runtime. Local `npm run dev` is unchanged and still uses
+`lib/server/db/data.json`.
+
+The `ref/` design prototype is reference-only and isn't imported by the app, so the Next.js build
+never bundles or serves it — it's already excluded from the deployed site.
+
 ## Architecture
 
 ```

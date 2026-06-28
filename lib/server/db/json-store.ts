@@ -39,6 +39,22 @@ const DATA_DIR = path.join(process.cwd(), 'lib', 'server', 'db');
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
 /**
+ * On Netlify the filesystem is ephemeral/read-only, so we persist to Netlify
+ * Blobs instead of the local JSON file. Netlify sets `NETLIFY=true` during both
+ * builds and function runs; local `next dev` leaves it unset and keeps using the
+ * on-disk file (`data.json`) exactly as before.
+ */
+const USE_BLOBS = !!process.env.NETLIFY;
+const BLOB_KEY = 'data';
+
+/** Lazily import `@netlify/blobs` so local dev never needs the package loaded. */
+async function blobStore() {
+  const { getStore } = await import('@netlify/blobs');
+  // Strong consistency so a read right after a write never returns stale data.
+  return getStore({ name: 'prohub-db', consistency: 'strong' });
+}
+
+/**
  * Serializes writes so concurrent mutations never interleave / corrupt the file.
  * Every public mutation chains onto this promise.
  */
@@ -54,17 +70,35 @@ async function ensureFile(): Promise<void> {
   }
 }
 
-/** READ — always pulls the current state straight from the JSON file. */
+/** READ — pulls the current state from Netlify Blobs (prod) or the JSON file (dev). */
 export async function readDb(): Promise<DbShape> {
-  await ensureFile();
-  const raw = await fs.readFile(DATA_FILE, 'utf8');
-  const db = JSON.parse(raw) as DbShape;
+  let db: DbShape;
+  if (USE_BLOBS) {
+    const store = await blobStore();
+    const existing = (await store.get(BLOB_KEY, { type: 'json' })) as DbShape | null;
+    if (existing) {
+      db = existing;
+    } else {
+      // First ever read: seed the store so subsequent reads have data.
+      db = seedData();
+      await store.setJSON(BLOB_KEY, db);
+    }
+  } else {
+    await ensureFile();
+    const raw = await fs.readFile(DATA_FILE, 'utf8');
+    db = JSON.parse(raw) as DbShape;
+  }
   normalize(db); // self-heal in memory; persisted on the next mutateDb
   return db;
 }
 
-/** Atomic write: write to a temp file then rename over the target. */
+/** WRITE — Netlify Blobs (prod) or an atomic temp-file rename (dev). */
 async function writeDb(db: DbShape): Promise<void> {
+  if (USE_BLOBS) {
+    const store = await blobStore();
+    await store.setJSON(BLOB_KEY, db);
+    return;
+  }
   const tmp = `${DATA_FILE}.${process.pid}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(db, null, 2), 'utf8');
   await fs.rename(tmp, DATA_FILE);
