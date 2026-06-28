@@ -155,7 +155,7 @@ export function Dashboard() {
 
         {tab === 0 && <TaskListView accent={accent} />}
         {tab === 1 && <ChangeRequestView />}
-        {tab === 2 && <TimelineView accent={accent} onAdd={() => setAddOpen(true)} />}
+        {tab === 2 && <TimelineView accent={accent} />}
 
         <AddTaskModal opened={addOpen} onClose={() => setAddOpen(false)} />
         <AddSectionModal opened={sectionOpen} onClose={() => setSectionOpen(false)} />

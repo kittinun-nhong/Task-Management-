@@ -6,6 +6,9 @@ export const CR_STATUSES = ['done', 'prog', 'open', 'block'] as const;
 export const crStatusSchema = z.enum(CR_STATUSES);
 export type CrStatus = z.infer<typeof crStatusSchema>;
 
+/** Preset ช่วงเวลา (period) options — shared by the add/edit form and inline editing. */
+export const CR_PERIODS = ['ไม่ระบุ', 'มิ.ย.', 'ก.ค. w1', 'ก.ค. w2', 'ก.ค. w3', 'ก.ค. w4', 'ส.ค. w1', 'ส.ค. w2'] as const;
+
 /** Response shape the API returns. */
 export const changeRequestSchema = z.object({
   id: z.number().int().positive(),

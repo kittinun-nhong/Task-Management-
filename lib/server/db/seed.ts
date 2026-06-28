@@ -9,6 +9,25 @@ import type { DbShape } from './json-store';
 const BASE = Date.parse('2026-06-01T00:00:00.000Z');
 const iso = (offsetSeconds: number) => new Date(BASE + offsetSeconds * 1000).toISOString();
 
+/**
+ * Calendar range for each legacy timeline column 1..7 (`YYYY-MM-DD`). Used to seed
+ * the new start/end dates and to migrate older stores that only had `week`.
+ */
+const LEGACY_WEEK_DATES: Record<number, [string, string]> = {
+  1: ['2026-06-23', '2026-06-29'],
+  2: ['2026-07-01', '2026-07-07'],
+  3: ['2026-07-08', '2026-07-14'],
+  4: ['2026-07-15', '2026-07-21'],
+  5: ['2026-07-22', '2026-07-28'],
+  6: ['2026-07-29', '2026-08-04'],
+  7: ['2026-08-05', '2026-08-11'],
+};
+
+/** Map a legacy `week` (1..7 or null) to a [startDate, endDate] pair (or nulls). */
+export function legacyWeekRange(week: number | null | undefined): [string | null, string | null] {
+  return (week != null && LEGACY_WEEK_DATES[week]) || [null, null];
+}
+
 interface SeedRow {
   code: string;
   title: string;
@@ -146,6 +165,7 @@ function buildTasks(): Task[] {
       id += 1;
       clock += 1;
       const week = localIndex < 6 ? (localIndex % 6) + 2 : null;
+      const [startDate, endDate] = legacyWeekRange(week);
       tasks.push({
         id,
         code: `FC-${String(id).padStart(3, '0')}`,
@@ -153,9 +173,9 @@ function buildTasks(): Task[] {
         group: g.key,
         status: row.status,
         priority: row.priority,
-        period: row.period,
+        startDate,
+        endDate,
         owner: 'PMO Team',
-        week,
         createdAt: iso(clock),
         updatedAt: iso(clock),
         deletedAt: null,

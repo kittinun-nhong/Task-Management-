@@ -10,15 +10,14 @@ import {
   type CreateChangeRequestInput,
   type ChangeRequest,
   CR_STATUSES,
+  CR_PERIODS,
 } from '@/lib/contracts/change-request';
 import { useCreateChangeRequest, useUpdateChangeRequest } from '@/lib/api/change-requests';
 import { useGetGroups } from '@/lib/api/groups';
 import { CR_STATUS } from '@/lib/ui/palette';
 
 const STATUS_DATA = CR_STATUSES.map((s) => ({ value: s, label: CR_STATUS[s].label }));
-const PERIOD_DATA = ['ไม่ระบุ', 'มิ.ย.', 'ก.ค. w1', 'ก.ค. w2', 'ก.ค. w3', 'ก.ค. w4', 'ส.ค. w1', 'ส.ค. w2'].map(
-  (v) => ({ value: v, label: v }),
-);
+const PERIOD_DATA = CR_PERIODS.map((v) => ({ value: v, label: v }));
 
 export function ChangeRequestModal({
   opened,

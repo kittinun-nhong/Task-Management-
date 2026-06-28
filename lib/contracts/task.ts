@@ -11,6 +11,9 @@ export const TASK_PRIORITIES = ['high', 'med', 'low'] as const;
 export const taskPrioritySchema = z.enum(TASK_PRIORITIES);
 export type TaskPriority = z.infer<typeof taskPrioritySchema>;
 
+/** `YYYY-MM-DD` calendar date (the ช่วงเวลา is now a real start–end range). */
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'รูปแบบวันที่ไม่ถูกต้อง');
+
 /** Response shape the API returns (what the client renders). */
 export const taskSchema = z.object({
   id: z.number().int().positive(),
@@ -19,9 +22,12 @@ export const taskSchema = z.object({
   group: groupKeySchema,
   status: taskStatusSchema,
   priority: taskPrioritySchema,
-  period: z.string(),
+  /** ช่วงเวลา — start/end of the task. Null = not scheduled (hidden from the timeline). */
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
   owner: z.string(),
-  /** Timeline column 1..7 (optional — only set for items shown on the board). */
+  /** @deprecated legacy preset period / fixed timeline column — kept for back-compat. */
+  period: z.string().optional(),
   week: z.number().int().min(1).max(7).nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -29,20 +35,27 @@ export const taskSchema = z.object({
 });
 export type Task = z.infer<typeof taskSchema>;
 
-/** Create request — the ONE schema the Route Handler validates AND the form resolves. */
-export const createTaskSchema = z.object({
+/** Mutable fields shared by create + update (so the date-range rule lives in one place). */
+const taskMutableFields = z.object({
   title: z.string().min(1, 'กรุณาระบุชื่องาน').max(200),
   group: groupKeySchema,
   status: taskStatusSchema.default('pend'),
   priority: taskPrioritySchema.default('med'),
-  period: z.string().min(1, 'กรุณาระบุช่วงเวลา'),
+  startDate: isoDateSchema,
+  endDate: isoDateSchema,
   owner: z.string().min(1).default('PMO Team'),
-  week: z.coerce.number().int().min(1).max(7).nullable().optional(),
 });
+
+const endNotBeforeStart = (d: { startDate?: string; endDate?: string }) =>
+  !d.startDate || !d.endDate || d.endDate >= d.startDate;
+const rangeError = { message: 'วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น', path: ['endDate'] };
+
+/** Create request — the ONE schema the Route Handler validates AND the form resolves. */
+export const createTaskSchema = taskMutableFields.refine(endNotBeforeStart, rangeError);
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 
-/** Update — derived, never re-declared. */
-export const updateTaskSchema = createTaskSchema.partial();
+/** Update — derived, every field optional, same range rule when both are present. */
+export const updateTaskSchema = taskMutableFields.partial().refine(endNotBeforeStart, rangeError);
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 
 /** Shared pagination + filter contract for the task list endpoint. */

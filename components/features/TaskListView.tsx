@@ -5,17 +5,20 @@ import {
   Button,
   Loader,
   Menu,
+  Popover,
   Select,
   TextInput,
 } from '@mantine/core';
-import { useDebouncedValue } from '@mantine/hooks';
+import { DatePicker } from '@mantine/dates';
+import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { Icon } from '@/components/ui/Icon';
-import type { GroupKey } from '@/lib/contracts/groups';
+import type { GroupKey, Group } from '@/lib/contracts/groups';
 import { TASK_STATUSES, TASK_PRIORITIES, type Task, type TaskPriority } from '@/lib/contracts/task';
 import { STATUS, PRIORITY } from '@/lib/ui/palette';
+import { thaiRange, toISODate, fromISODate } from '@/lib/ui/date';
 import { useGetTasks, useUpdateTask, useDeleteTask } from '@/lib/api/tasks';
-import { useGetGroups } from '@/lib/api/groups';
+import { useGetGroups, useDeleteGroup } from '@/lib/api/groups';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const PER_PAGE = 10;
@@ -32,6 +35,7 @@ export function TaskListView({ accent }: { accent: string }) {
   const [priority, setPriority] = useState<string>(ALL);
   const [pages, setPages] = useState<Record<string, number>>({});
   const [confirm, setConfirm] = useState<Task | null>(null);
+  const [confirmGroup, setConfirmGroup] = useState<{ meta: Group; count: number } | null>(null);
 
   const { data, isFetching } = useGetTasks({
     limit: 100,
@@ -46,6 +50,7 @@ export function TaskListView({ accent }: { accent: string }) {
   const { data: groups } = useGetGroups();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const deleteGroup = useDeleteGroup();
 
   const groupOptions = useMemo(
     () => [{ value: ALL, label: 'ทั้งหมด' }, ...(groups ?? []).map((g) => ({ value: g.key, label: g.title }))],
@@ -91,6 +96,14 @@ export function TaskListView({ accent }: { accent: string }) {
     }
   };
 
+  const onChangeDates = async (task: Task, startDate: string, endDate: string) => {
+    try {
+      await updateTask.mutateAsync({ id: task.id, data: { startDate, endDate } });
+    } catch {
+      notifications.show({ message: 'แก้ไขช่วงเวลาไม่สำเร็จ', color: 'red' });
+    }
+  };
+
   const onConfirmDelete = async () => {
     if (!confirm) return;
     try {
@@ -100,6 +113,18 @@ export function TaskListView({ accent }: { accent: string }) {
       notifications.show({ message: 'ลบรายการไม่สำเร็จ', color: 'red' });
     } finally {
       setConfirm(null);
+    }
+  };
+
+  const onConfirmDeleteGroup = async () => {
+    if (!confirmGroup) return;
+    try {
+      await deleteGroup.mutateAsync(confirmGroup.meta.id);
+      notifications.show({ message: 'ลบหมวดหมู่แล้ว', color: 'green' });
+    } catch {
+      notifications.show({ message: 'ลบหมวดหมู่ไม่สำเร็จ', color: 'red' });
+    } finally {
+      setConfirmGroup(null);
     }
   };
 
@@ -150,12 +175,28 @@ export function TaskListView({ accent }: { accent: string }) {
                 <div style={iconBox(meta.accent)}>
                   <Icon path={meta.icon} color={meta.accent} />
                 </div>
-                <div>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: '#1B2138' }}>{meta.title}</div>
                   <div style={{ fontSize: 12.5, color: '#9AA1B2', marginTop: 1 }}>
                     <strong style={{ color: '#5B6478', fontWeight: 600 }}>{rows.length}</strong> รายการ
                   </div>
                 </div>
+                <Menu position="bottom-end" withinPortal shadow="md">
+                  <Menu.Target>
+                    <button style={kebabBtn} aria-label="ตัวเลือกหมวดหมู่">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="1.7" />
+                        <circle cx="12" cy="12" r="1.7" />
+                        <circle cx="12" cy="19" r="1.7" />
+                      </svg>
+                    </button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item color="red" onClick={() => setConfirmGroup({ meta, count: rows.length })}>
+                      ลบหมวดหมู่
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
               </div>
 
               {/* table header */}
@@ -220,7 +261,9 @@ export function TaskListView({ accent }: { accent: string }) {
                         </Menu.Dropdown>
                       </Menu>
                     </div>
-                    <div style={{ fontSize: 13, color: '#4B5468' }}>{r.period}</div>
+                    <div>
+                      <PeriodCell task={r} onChange={onChangeDates} />
+                    </div>
                     <div style={{ fontSize: 13, color: '#4B5468' }}>{r.owner}</div>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                       <Menu position="bottom-end" withinPortal shadow="md">
@@ -277,7 +320,77 @@ export function TaskListView({ accent }: { accent: string }) {
         onCancel={() => setConfirm(null)}
         loading={deleteTask.isPending}
       />
+
+      <ConfirmDialog
+        opened={!!confirmGroup}
+        title="ท่านต้องการลบหมวดหมู่นี้หรือไม่"
+        detail={
+          confirmGroup
+            ? `${confirmGroup.meta.title}${confirmGroup.count ? ` — มีงาน ${confirmGroup.count} รายการในหมวดนี้` : ''}`
+            : ''
+        }
+        confirmLabel="ลบหมวดหมู่"
+        onConfirm={onConfirmDeleteGroup}
+        onCancel={() => setConfirmGroup(null)}
+        loading={deleteGroup.isPending}
+      />
     </div>
+  );
+}
+
+/** Inline ช่วงเวลา editor: shows the Thai date range, opens a range calendar on click. */
+function PeriodCell({
+  task,
+  onChange,
+}: {
+  task: Task;
+  onChange: (task: Task, startDate: string, endDate: string) => void;
+}) {
+  const [opened, { open, close }] = useDisclosure(false);
+  // Pending selection lives in local state so the FIRST click (start date) isn't
+  // discarded before the second click (end date) lands. We only persist a full range.
+  const [range, setRange] = useState<[Date | null, Date | null]>([null, null]);
+
+  const handleOpen = () => {
+    setRange([fromISODate(task.startDate), fromISODate(task.endDate)]);
+    open();
+  };
+
+  const handleChange = (val: [Date | null, Date | null]) => {
+    setRange(val);
+    const [start, end] = val;
+    if (start && end) {
+      onChange(task, toISODate(start)!, toISODate(end)!);
+      close();
+    }
+  };
+
+  return (
+    <Popover
+      opened={opened}
+      onChange={(o) => (o ? handleOpen() : close())}
+      position="bottom-start"
+      withinPortal
+      shadow="md"
+      radius="md"
+      trapFocus
+    >
+      <Popover.Target>
+        <button type="button" style={periodBtn} onClick={() => (opened ? close() : handleOpen())}>
+          {thaiRange(task.startDate, task.endDate)}
+          <Caret />
+        </button>
+      </Popover.Target>
+      <Popover.Dropdown p="sm">
+        <DatePicker
+          type="range"
+          value={range}
+          defaultDate={fromISODate(task.startDate) ?? undefined}
+          allowSingleDateInRange
+          onChange={handleChange}
+        />
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 
@@ -327,7 +440,7 @@ const iconBox = (accent: string): React.CSSProperties => ({
 
 const rowGrid: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '100px minmax(0,1fr) 160px 130px 96px 110px 26px',
+  gridTemplateColumns: '100px minmax(0,1fr) 160px 130px 150px 110px 26px',
   gap: 12,
 };
 
@@ -362,6 +475,23 @@ const priorityBtn = (bg: string, tx: string): React.CSSProperties => ({
   cursor: 'pointer',
   fontFamily: 'inherit',
 });
+
+const periodBtn: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 5,
+  padding: '4px 9px',
+  borderRadius: 8,
+  fontSize: 13,
+  fontWeight: 500,
+  background: '#fff',
+  color: '#4B5468',
+  border: '1px solid #E4E7EF',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  maxWidth: '100%',
+  whiteSpace: 'nowrap',
+};
 
 const kebabBtn: React.CSSProperties = {
   background: 'none',

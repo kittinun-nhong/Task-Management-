@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { Task } from '@/lib/contracts/task';
 import type { ChangeRequest } from '@/lib/contracts/change-request';
 import type { Group } from '@/lib/contracts/groups';
-import { seedData, seedGroups } from './seed';
+import { seedData, seedGroups, legacyWeekRange } from './seed';
 
 /** The full on-disk database shape. */
 export interface DbShape {
@@ -12,7 +12,16 @@ export interface DbShape {
   changeRequests: ChangeRequest[];
   groups: Group[];
   counters: { task: number; changeRequest: number; group: number };
+  /** Build/deploy stamp of the seed that produced this store (Blobs only). */
+  seedVersion?: string;
 }
+
+/**
+ * Unique per Netlify deploy (baked in at build time via next.config `env`).
+ * When the persisted store's `seedVersion` differs, the Blobs store is reset to
+ * fresh seed data — i.e. data is cleared on every deploy. Empty locally.
+ */
+const SEED_VERSION = process.env.SEED_VERSION || '';
 
 /**
  * Idempotent migration for data.json files written before `groups` existed:
@@ -31,6 +40,15 @@ function normalize(db: DbShape): boolean {
   } else if (typeof db.counters.group !== 'number') {
     db.counters.group = db.groups.length;
     changed = true;
+  }
+  // Backfill the new ช่วงเวลา date range from the legacy `week` column.
+  for (const t of db.tasks ?? []) {
+    if (t.startDate === undefined || t.endDate === undefined) {
+      const [startDate, endDate] = legacyWeekRange(t.week);
+      t.startDate = startDate;
+      t.endDate = endDate;
+      changed = true;
+    }
   }
   return changed;
 }
@@ -81,11 +99,12 @@ export async function readDb(): Promise<DbShape> {
   if (USE_BLOBS) {
     const store = await blobStore();
     const existing = (await store.get(BLOB_KEY, { type: 'json' })) as DbShape | null;
-    if (existing) {
+    if (existing && existing.seedVersion === SEED_VERSION) {
       db = existing;
     } else {
-      // First ever read: seed the store so subsequent reads have data.
+      // No store yet, OR a new deploy → clear data by reseeding from scratch.
       db = seedData();
+      db.seedVersion = SEED_VERSION;
       await store.setJSON(BLOB_KEY, db);
     }
   } else {

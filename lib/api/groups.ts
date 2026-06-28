@@ -25,3 +25,15 @@ export function useCreateGroup() {
     onSuccess: () => qc.invalidateQueries({ queryKey: groupKeys.all }),
   });
 }
+
+export function useDeleteGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => apiFetch<void>(`/groups/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      // Deleting a section also changes which tasks are shown, so refresh both.
+      qc.invalidateQueries({ queryKey: groupKeys.all });
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}

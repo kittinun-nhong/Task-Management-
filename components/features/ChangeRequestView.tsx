@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Button, Loader } from '@mantine/core';
+import { Button, Loader, Menu } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Icon } from '@/components/ui/Icon';
-import type { ChangeRequest } from '@/lib/contracts/change-request';
+import { type ChangeRequest, CR_PERIODS } from '@/lib/contracts/change-request';
 import { CR_STATUS } from '@/lib/ui/palette';
-import { useGetChangeRequests, useDeleteChangeRequest } from '@/lib/api/change-requests';
+import { useGetChangeRequests, useDeleteChangeRequest, useUpdateChangeRequest } from '@/lib/api/change-requests';
 import { useGetGroups } from '@/lib/api/groups';
 import { ChangeRequestModal } from './ChangeRequestModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -15,6 +15,7 @@ export function ChangeRequestView() {
   const { data, isFetching } = useGetChangeRequests();
   const { data: groups } = useGetGroups();
   const deleteCr = useDeleteChangeRequest();
+  const updateCr = useUpdateChangeRequest();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ChangeRequest | null>(null);
   const [confirm, setConfirm] = useState<ChangeRequest | null>(null);
@@ -30,6 +31,14 @@ export function ChangeRequestView() {
       .filter((g) => byFlow.has(g.key))
       .map((g) => ({ meta: g, items: byFlow.get(g.key)! }));
   }, [data, groups]);
+
+  const onChangePeriod = async (cr: ChangeRequest, period: string) => {
+    try {
+      await updateCr.mutateAsync({ id: cr.id, data: { period } });
+    } catch {
+      notifications.show({ message: 'แก้ไขช่วงเวลาไม่สำเร็จ', color: 'red' });
+    }
+  };
 
   const onConfirmDelete = async () => {
     if (!confirm) return;
@@ -102,9 +111,25 @@ export function ChangeRequestView() {
                     <span style={{ width: 11, height: 11, borderRadius: 3, background: st.sq, flex: '0 0 auto' }} />
                     <span style={{ fontSize: 12.5, color: '#2B3146', whiteSpace: 'nowrap' }}>{st.label}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #E1E4ED', borderRadius: 8, padding: '7px 11px' }}>
-                    <span style={{ fontSize: 12.5, color: '#2B3146', whiteSpace: 'nowrap' }}>{i.period}</span>
-                  </div>
+                  <Menu position="bottom-start" withinPortal shadow="md">
+                    <Menu.Target>
+                      <button
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', border: '1px solid #E1E4ED', borderRadius: 8, padding: '7px 11px', background: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}
+                      >
+                        <span style={{ fontSize: 12.5, color: '#2B3146', whiteSpace: 'nowrap' }}>{i.period}</span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, color: '#5B6478' }}>
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      {CR_PERIODS.map((p) => (
+                        <Menu.Item key={p} onClick={() => onChangePeriod(i, p)}>
+                          <span style={{ fontSize: 12.5, fontWeight: 600, color: p === i.period ? meta.accent : '#4B5468' }}>{p}</span>
+                        </Menu.Item>
+                      ))}
+                    </Menu.Dropdown>
+                  </Menu>
                   <button onClick={() => openEdit(i)} style={editBtn}>
                     แก้ไข
                   </button>

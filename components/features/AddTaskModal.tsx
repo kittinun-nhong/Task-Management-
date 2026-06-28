@@ -4,17 +4,16 @@ import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Group, Modal, Select, Stack, TextInput } from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { createTaskSchema, type CreateTaskInput, TASK_STATUSES, TASK_PRIORITIES } from '@/lib/contracts/task';
 import { useCreateTask } from '@/lib/api/tasks';
 import { useGetGroups } from '@/lib/api/groups';
 import { STATUS, PRIORITY } from '@/lib/ui/palette';
+import { toISODate, fromISODate } from '@/lib/ui/date';
 
 const STATUS_DATA = TASK_STATUSES.map((s) => ({ value: s, label: STATUS[s].label }));
 const PRIORITY_DATA = TASK_PRIORITIES.map((p) => ({ value: p, label: PRIORITY[p].label }));
-const PERIOD_DATA = ['มิ.ย. 2026', 'ก.ค. w1', 'ก.ค. w2', 'ก.ค. w3', 'ก.ค. w4', 'ส.ค. w1', 'ส.ค. w2'].map(
-  (v) => ({ value: v, label: v }),
-);
 
 export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: () => void }) {
   const { mutateAsync } = useCreateTask();
@@ -25,6 +24,8 @@ export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: ()
     handleSubmit,
     control,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
@@ -33,7 +34,8 @@ export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: ()
       group: 'foundation',
       status: 'pend',
       priority: 'med',
-      period: 'มิ.ย. 2026',
+      startDate: '',
+      endDate: '',
       owner: 'PMO Team',
     },
   });
@@ -78,9 +80,22 @@ export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: ()
           <Group grow align="flex-start">
             <Controller
               control={control}
-              name="period"
+              name="startDate"
               render={({ field }) => (
-                <Select label="ช่วงเวลา" data={PERIOD_DATA} value={field.value} onChange={(v) => field.onChange(v)} searchable allowDeselect={false} error={errors.period?.message} />
+                <DatePickerInput
+                  type="range"
+                  label="ช่วงเวลา"
+                  placeholder="เลือกวันเริ่มต้น – วันสิ้นสุด"
+                  valueFormat="D MMM YYYY"
+                  value={[fromISODate(field.value), fromISODate(watch('endDate'))]}
+                  onChange={([start, end]) => {
+                    setValue('startDate', toISODate(start) ?? '', { shouldValidate: true });
+                    setValue('endDate', toISODate(end) ?? '', { shouldValidate: true });
+                  }}
+                  error={errors.startDate?.message ?? errors.endDate?.message}
+                  popoverProps={{ withinPortal: true }}
+                  clearable
+                />
               )}
             />
             <Controller
