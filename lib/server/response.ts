@@ -46,8 +46,14 @@ export const notFound = (message = 'Not found') =>
   NextResponse.json({ success: false, message }, { status: 404 });
 
 export const internalError = (err: unknown) => {
-  console.error(err); // log internally, never expose
-  return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+  console.error(err); // always logged to the platform (Netlify function logs)
+  // Surface the cause only when explicitly opted in (set DEBUG_API_ERRORS=1 in
+  // the Netlify env to diagnose 500s); otherwise never expose internals.
+  const detail =
+    process.env.DEBUG_API_ERRORS === '1'
+      ? { detail: err instanceof Error ? err.message : String(err) }
+      : {};
+  return NextResponse.json({ success: false, message: 'Internal server error', ...detail }, { status: 500 });
 };
 
 /** Server Actions return this discriminated result instead of an HTTP envelope. */

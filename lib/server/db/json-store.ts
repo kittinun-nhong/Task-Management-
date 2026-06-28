@@ -40,11 +40,16 @@ const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
 /**
  * On Netlify the filesystem is ephemeral/read-only, so we persist to Netlify
- * Blobs instead of the local JSON file. Netlify sets `NETLIFY=true` during both
- * builds and function runs; local `next dev` leaves it unset and keeps using the
- * on-disk file (`data.json`) exactly as before.
+ * Blobs instead of the local JSON file.
+ *
+ * Detection: `NETLIFY_BLOBS_CONTEXT` is injected into the function at *runtime*
+ * by the Netlify Next.js runtime and is exactly what `getStore()` reads to
+ * auto-configure — so its presence means Blobs both should and can be used.
+ * (`NETLIFY=true` only covers the build step and is NOT reliably set at function
+ * runtime, which is why we don't depend on it alone.) Local `next dev` / `next
+ * start` have neither and keep using the on-disk file (`data.json`) as before.
  */
-const USE_BLOBS = !!process.env.NETLIFY;
+const USE_BLOBS = !!(process.env.NETLIFY_BLOBS_CONTEXT || process.env.NETLIFY);
 const BLOB_KEY = 'data';
 
 /** Lazily import `@netlify/blobs` so local dev never needs the package loaded. */
