@@ -24,6 +24,14 @@ function thaiDay(d: dayjs.Dayjs, withMonth: boolean): string {
   return withMonth ? `${d.date()} ${THAI_MONTHS_ABBR[d.month()]}` : String(d.date());
 }
 
+/** Thai date + time for the "อัปเดตล่าสุด" columns, e.g. "29 มิ.ย. 2026 14:30". */
+export function thaiDateTime(value: string | null | undefined): string {
+  if (!value) return '—';
+  const d = dayjs(value);
+  if (!d.isValid()) return '—';
+  return `${d.date()} ${THAI_MONTHS_ABBR[d.month()]} ${d.year()} ${d.format('HH:mm')}`;
+}
+
 /**
  * Human Thai range, e.g. "23–29 มิ.ย." (same month) or "29 ก.ค. – 4 ส.ค."
  * (across months). Falls back to a single date or "—" when data is missing.

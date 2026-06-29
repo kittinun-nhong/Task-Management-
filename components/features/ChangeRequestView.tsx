@@ -8,7 +8,7 @@ import { notifications } from '@mantine/notifications';
 import { Icon } from '@/components/ui/Icon';
 import { type ChangeRequest } from '@/lib/contracts/change-request';
 import { CR_STATUS } from '@/lib/ui/palette';
-import { thaiRange, toISODate, fromISODate } from '@/lib/ui/date';
+import { thaiRange, thaiDateTime, toISODate, fromISODate } from '@/lib/ui/date';
 import { useGetChangeRequests, useDeleteChangeRequest, useUpdateChangeRequest } from '@/lib/api/change-requests';
 import { useGetGroups } from '@/lib/api/groups';
 import { ChangeRequestModal } from './ChangeRequestModal';
@@ -98,12 +98,14 @@ export function ChangeRequestView() {
                 <div style={{ fontSize: 12, color: meta.accent, fontWeight: 600, marginTop: 1 }}>{items.length} รายการ</div>
               </div>
             </div>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ minWidth: 870 }}>
             {items.map((i) => {
               const st = CR_STATUS[i.status];
               return (
                 <div
                   key={i.id}
-                  style={{ display: 'grid', gridTemplateColumns: '60px minmax(220px,1fr) 170px 120px auto auto', gap: 12, alignItems: 'center', padding: '15px 4px', borderTop: '1px solid #F1F2F7' }}
+                  style={{ display: 'grid', gridTemplateColumns: '60px minmax(220px,1fr) 170px 120px 150px auto auto', gap: 12, alignItems: 'center', padding: '15px 4px', borderTop: '1px solid #F1F2F7' }}
                 >
                   <div style={{ fontSize: 11.5, fontWeight: 600, color: '#9AA1B2', letterSpacing: 0.3 }}>{i.code}</div>
                   <div style={{ minWidth: 0 }}>
@@ -115,6 +117,10 @@ export function ChangeRequestView() {
                     <span style={{ fontSize: 12.5, color: '#2B3146', whiteSpace: 'nowrap' }}>{st.label}</span>
                   </div>
                   <CrPeriodCell cr={i} onChange={onChangeDates} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 10.5, color: '#AEB5C4', fontWeight: 600 }}>อัปเดตล่าสุด</div>
+                    <div style={{ fontSize: 12.5, color: '#7A8298', whiteSpace: 'nowrap' }}>{thaiDateTime(i.updatedAt)}</div>
+                  </div>
                   <button onClick={() => openEdit(i)} style={editBtn}>
                     แก้ไข
                   </button>
@@ -124,6 +130,8 @@ export function ChangeRequestView() {
                 </div>
               );
             })}
+            </div>
+            </div>
           </section>
         ))}
       </div>

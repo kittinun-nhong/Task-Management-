@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { ACCENT, LEGEND } from '@/lib/ui/palette';
 import { TaskListView } from './TaskListView';
 import { TimelineView } from './TimelineView';
@@ -16,66 +17,85 @@ export function Dashboard() {
   const [tab, setTab] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
   const [sectionOpen, setSectionOpen] = useState(false);
+  const isMobile = !!useMediaQuery('(max-width: 768px)');
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh' }}>
       {/* SIDEBAR */}
       <aside
-        style={{
-          width: 232,
-          flex: '0 0 232px',
-          background: '#fff',
-          borderRight: '1px solid #ECEEF3',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-        }}
+        style={
+          isMobile
+            ? {
+                width: '100%',
+                flex: '0 0 auto',
+                background: '#fff',
+                borderBottom: '1px solid #ECEEF3',
+                display: 'flex',
+                alignItems: 'center',
+                position: 'sticky',
+                top: 0,
+                zIndex: 20,
+              }
+            : {
+                width: 232,
+                flex: '0 0 232px',
+                background: '#fff',
+                borderRight: '1px solid #ECEEF3',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'sticky',
+                top: 0,
+                height: '100vh',
+              }
+        }
       >
-        <div style={{ display: 'flex', alignItems: 'center', padding: '22px 20px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: isMobile ? '12px 16px' : '22px 20px 18px' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/prohub_logo_full.png" alt="ProHub" style={{ height: 38, width: 'auto', display: 'block' }} />
+          <img src="/prohub_logo_full.png" alt="ProHub" style={{ height: isMobile ? 30 : 38, width: 'auto', display: 'block' }} />
         </div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: '8px 14px' }}>
-          <a
-            href="#"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '11px 14px',
-              borderRadius: 11,
-              background: accent,
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 600,
-              textDecoration: 'none',
-              boxShadow: '0 6px 16px rgba(108,93,211,.28)',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="14" width="7" height="7" rx="1.5" />
-              <rect x="3" y="14" width="7" height="7" rx="1.5" />
-            </svg>
-            แผนงานผลิตภัณฑ์
-          </a>
-        </nav>
-        <div style={{ marginTop: 'auto', padding: '18px 20px', fontSize: 11, color: '#A6AEC0' }}>© 2026 ProHub. All rights reserved.</div>
+        {!isMobile && (
+          <>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: 5, padding: '8px 14px' }}>
+              <a
+                href="#"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '11px 14px',
+                  borderRadius: 11,
+                  background: accent,
+                  color: '#fff',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  boxShadow: '0 6px 16px rgba(108,93,211,.28)',
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+                แผนงานผลิตภัณฑ์
+              </a>
+            </nav>
+            <div style={{ marginTop: 'auto', padding: '18px 20px', fontSize: 11, color: '#A6AEC0' }}>© 2026 ProHub. All rights reserved.</div>
+          </>
+        )}
       </aside>
 
       {/* MAIN */}
-      <main style={{ flex: 1, minWidth: 0, padding: '28px 36px 40px' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, marginBottom: 18 }}>
+      <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px 16px 32px' : '28px 36px 40px' }}>
+        <header style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: isMobile ? 12 : 24, marginBottom: 18 }}>
           <div style={{ minWidth: 0 }}>
-            <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 700, letterSpacing: -0.3, color: '#1B2138' }}>แผนงานผลิตภัณฑ์</h1>
+            <h1 style={{ margin: '0 0 6px', fontSize: isMobile ? 22 : 28, fontWeight: 700, letterSpacing: -0.3, color: '#1B2138' }}>แผนงานผลิตภัณฑ์</h1>
             <p style={{ margin: 0, fontSize: 14, color: '#6B7388', maxWidth: 560 }}>
               ภาพรวมแผนงาน พัฒนาและส่งมอบคุณค่าให้ผู้ใช้งานอย่างต่อเนื่องและแน่นในแต่ละสปรินต์
             </p>
           </div>
-          <div style={{ textAlign: 'right', fontSize: 12, color: '#1B2138', lineHeight: 1.9, flex: '0 0 auto' }}>
+          <div style={{ textAlign: isMobile ? 'left' : 'right', fontSize: 12, color: '#1B2138', lineHeight: 1.9, flex: '0 0 auto' }}>
             <div>
               <span style={{ color: '#9AA1B2', letterSpacing: 0.3, marginRight: 8 }}>UPDATED</span>
               <strong style={{ fontWeight: 600 }}>27 มิ.ย. 2026</strong>
@@ -98,7 +118,7 @@ export function Dashboard() {
         </div>
 
         {/* TABS */}
-        <div style={{ display: 'flex', gap: 30, borderBottom: '1px solid #E8EAF1', marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: isMobile ? 20 : 30, borderBottom: '1px solid #E8EAF1', marginBottom: 20, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {TABS.map((label, i) => {
             const active = i === tab;
             return (
@@ -116,6 +136,8 @@ export function Dashboard() {
                   color: active ? accent : '#7A8298',
                   borderBottom: `2.5px solid ${active ? accent : 'transparent'}`,
                   marginBottom: -1,
+                  whiteSpace: 'nowrap',
+                  flex: '0 0 auto',
                 }}
               >
                 {label}
@@ -126,7 +148,7 @@ export function Dashboard() {
 
         {/* ACTION BUTTON (list tab) */}
         {tab === 0 && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 12, marginBottom: 16 }}>
             <Button
               variant="default"
               onClick={() => setSectionOpen(true)}

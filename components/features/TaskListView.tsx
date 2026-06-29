@@ -10,13 +10,13 @@ import {
   TextInput,
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
-import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
+import { useDebouncedValue, useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { Icon } from '@/components/ui/Icon';
 import type { GroupKey, Group } from '@/lib/contracts/groups';
 import { TASK_STATUSES, TASK_PRIORITIES, type Task, type TaskPriority } from '@/lib/contracts/task';
 import { STATUS, PRIORITY } from '@/lib/ui/palette';
-import { thaiRange, toISODate, fromISODate } from '@/lib/ui/date';
+import { thaiRange, thaiDateTime, toISODate, fromISODate } from '@/lib/ui/date';
 import { useGetTasks, useUpdateTask, useDeleteTask } from '@/lib/api/tasks';
 import { useGetGroups, useDeleteGroup } from '@/lib/api/groups';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -38,6 +38,9 @@ export function TaskListView({ accent }: { accent: string }) {
   const [confirm, setConfirm] = useState<Task | null>(null);
   const [confirmGroup, setConfirmGroup] = useState<{ meta: Group; count: number } | null>(null);
   const [editing, setEditing] = useState<Task | null>(null);
+  const isMobile = !!useMediaQuery('(max-width: 768px)');
+  const isTablet = !!useMediaQuery('(max-width: 1024px)');
+  const filterCols = isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)';
 
   const { data, isFetching } = useGetTasks({
     limit: 100,
@@ -134,7 +137,7 @@ export function TaskListView({ accent }: { accent: string }) {
     <div>
       {/* FILTER PANEL */}
       <div style={panel}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '18px 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: filterCols, gap: '18px 20px' }}>
           <Field label="ค้นหา (ชื่อหัวข้อ / ID / คำอธิบาย)">
             <TextInput
               placeholder="ค้นหางาน..."
@@ -152,7 +155,7 @@ export function TaskListView({ accent }: { accent: string }) {
           <Field label="ความสำคัญ">
             <Select data={priorityOptions} value={priority} onChange={(v) => setPriority(v ?? ALL)} allowDeselect={false} />
           </Field>
-          <div style={{ gridColumn: '3 / 5', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 12 }}>
+          <div style={{ gridColumn: isTablet ? '1 / -1' : '3 / 5', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', gap: 12 }}>
             <Button variant="default" onClick={clearFilters}>
               ล้างตัวกรอง
             </Button>
@@ -200,6 +203,8 @@ export function TaskListView({ accent }: { accent: string }) {
               </div>
 
               {/* rows */}
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div style={{ minWidth: 1050 }}>
               {pageRows.map((r) => {
                 const st = STATUS[r.status];
                 const pr = PRIORITY[r.priority];
@@ -257,6 +262,10 @@ export function TaskListView({ accent }: { accent: string }) {
                       <PeriodCell task={r} onChange={onChangeDates} />
                     </div>
                     <div style={{ fontSize: 13, color: '#4B5468', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.owner}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 10.5, color: '#AEB5C4', fontWeight: 600 }}>อัปเดตล่าสุด</div>
+                      <div style={{ fontSize: 12.5, color: '#7A8298', whiteSpace: 'nowrap' }}>{thaiDateTime(r.updatedAt)}</div>
+                    </div>
                     <button onClick={() => setEditing(r)} style={editBtn}>
                       แก้ไข
                     </button>
@@ -266,6 +275,8 @@ export function TaskListView({ accent }: { accent: string }) {
                   </div>
                 );
               })}
+              </div>
+              </div>
 
               {/* footer / pager */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 4px 14px' }}>
@@ -422,7 +433,7 @@ const iconBox = (accent: string): React.CSSProperties => ({
 
 const rowGrid: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '90px minmax(0,1fr) 170px 120px 160px 110px auto auto',
+  gridTemplateColumns: '90px minmax(0,1fr) 170px 120px 160px 110px 150px auto auto',
   gap: 12,
 };
 
