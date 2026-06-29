@@ -218,10 +218,24 @@
             <div style="display:grid; grid-template-columns:100px minmax(0,1fr) 160px 120px 96px 110px 26px; gap:12px; align-items:center; padding:{{ rowPad }} 4px; border-bottom:1px solid #F4F5F8;" style-hover="background:#FAFAFE;">
               <div style="font-size:13px; font-weight:600; color:{{ g.accent }};">{{ r.code }}</div>
               <div style="font-size:13.5px; color:#2B3146; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.title }}</div>
-              <div>
-                <span style="display:inline-flex; align-items:center; gap:7px; padding:4px 11px; border-radius:999px; font-size:12px; font-weight:600; background:{{ r.stBg }}; color:{{ r.stTx }};">
+              <div style="position:relative;">
+                <button onClick="{{ r.onStToggle }}" style="display:inline-flex; align-items:center; gap:7px; padding:4px 9px 4px 11px; border-radius:999px; font-size:12px; font-weight:600; background:{{ r.stBg }}; color:{{ r.stTx }}; border:none; cursor:pointer; font-family:inherit;">
                   <span style="width:7px; height:7px; border-radius:50%; background:{{ r.stDot }};"></span>{{ r.stLabel }}
-                </span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7; transform:{{ r.stRot }}; transition:transform .15s;"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <sc-if value="{{ r.stOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute; top:30px; left:0; z-index:45; background:#fff; border:1px solid #E8EAF1; border-radius:10px; box-shadow:0 10px 28px rgba(20,24,40,.16); padding:5px; min-width:158px;">
+                    <sc-for list="{{ r.stOpts }}" as="so" hint-placeholder-count="4">
+                      <button onClick="{{ so.pick }}" style="display:flex; align-items:center; gap:8px; width:100%; background:{{ so.bg }}; border:none; cursor:pointer; padding:8px 10px; border-radius:7px; font-family:inherit; font-size:12.5px; font-weight:{{ so.weight }}; color:{{ so.tx }}; text-align:left;" style-hover="background:#F4F5F9;">
+                        <span style="width:8px; height:8px; border-radius:50%; background:{{ so.dot }}; flex:0 0 auto;"></span>
+                        <span style="flex:1; white-space:nowrap;">{{ so.label }}</span>
+                        <sc-if value="{{ so.selected }}" hint-placeholder-val="{{ false }}">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ so.tick }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </sc-if>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
               </div>
               <div style="position:relative;">
                 <button onClick="{{ r.onPriToggle }}" style="display:inline-flex; align-items:center; gap:5px; padding:4px 9px 4px 11px; border-radius:999px; font-size:12px; font-weight:600; background:{{ r.prBg }}; color:{{ r.prTx }}; border:none; cursor:pointer; font-family:inherit;">
@@ -366,10 +380,25 @@
                   <div style="font-size:14px; font-weight:700; color:#1B2138; margin-bottom:3px;">{{ i.title }}</div>
                   <div style="font-size:12.5px; color:#7A8298; line-height:1.45;">{{ i.desc }}</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px; border:1px solid #E1E4ED; border-radius:8px; padding:7px 11px; background:#fff;">
-                  <span style="width:11px; height:11px; border-radius:3px; background:{{ i.stSq }}; flex:0 0 auto;"></span>
-                  <span style="flex:1; font-size:12.5px; color:#2B3146; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ i.stLabel }}</span>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA1B2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><polyline points="6 9 12 15 18 9"/></svg>
+                <div style="position:relative;">
+                  <div onClick="{{ i.onStToggle }}" style="display:flex; align-items:center; gap:8px; border:1px solid #E1E4ED; border-radius:8px; padding:7px 11px; background:#fff; cursor:pointer;" style-hover="background:#F6F7FB;">
+                    <span style="width:11px; height:11px; border-radius:3px; background:{{ i.stSq }}; flex:0 0 auto;"></span>
+                    <span style="flex:1; font-size:12.5px; color:#2B3146; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ i.stLabel }}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AA1B2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto; transform:{{ i.stRot }}; transition:transform .15s;"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                  <sc-if value="{{ i.stOpen }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:50; background:#fff; border:1px solid #E8EAF1; border-radius:10px; box-shadow:0 10px 28px rgba(20,24,40,.16); padding:5px;">
+                      <sc-for list="{{ i.stOpts }}" as="so" hint-placeholder-count="4">
+                        <div onClick="{{ so.pick }}" style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:7px; font-size:12.5px; font-weight:{{ so.weight }}; color:#2B3146; cursor:pointer; background:{{ so.bg }};" style-hover="background:#F4F5F9;">
+                          <span style="width:11px; height:11px; border-radius:3px; background:{{ so.sq }}; flex:0 0 auto;"></span>
+                          <span style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ so.label }}</span>
+                          <sc-if value="{{ so.selected }}" hint-placeholder-val="{{ false }}">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ so.tick }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;"><polyline points="20 6 9 17 4 12"/></svg>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; border:1px solid #E1E4ED; border-radius:8px; padding:7px 11px; background:#fff;">
                   <span style="flex:1; font-size:12.5px; color:#2B3146; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ i.period }}</span>
@@ -452,7 +481,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1060},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#6C5DD3&quot;,&quot;options&quot;:[&quot;#6C5DD3&quot;,&quot;#2F6BED&quot;,&quot;#16A77C&quot;,&quot;#E8590C&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;comfortable&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
 class Component extends DCLogic {
-  state = { tab: 1, menuOpen: null, confirmCode: null, confirmTitle: '', deleted: [], addOpen: false, secPage: {}, priMenu: null, priOverride: {}, crDeleted: [], crFormOpen: false };
+  state = { tab: 1, menuOpen: null, confirmCode: null, confirmTitle: '', deleted: [], addOpen: false, secPage: {}, priMenu: null, priOverride: {}, crDeleted: [], crFormOpen: false, crStMenu: null, crStatus: {}, stMenu: null, stOverride: {} };
 
   icon(d, color) {
     return React.createElement('svg', {
@@ -479,7 +508,7 @@ class Component extends DCLogic {
     };
 
     const mkRow = (code, title, st, pr, period) => ({
-      code, title, period, owner: 'PMO Team', priKey: pr,
+      code, title, period, owner: 'PMO Team', priKey: pr, stKey: st,
       stLabel: ST[st].l, stDot: ST[st].dot, stBg: ST[st].bg, stTx: ST[st].tx,
     });
 
@@ -654,18 +683,31 @@ class Component extends DCLogic {
         rows: pageRows.map(r => {
           const pk = this.state.priOverride[r.code] || r.priKey;
           const pv = PR[pk];
+          const sk = this.state.stOverride[r.code] || r.stKey;
+          const sv = ST[sk];
           return {
             ...r,
+            stLabel: sv.l, stDot: sv.dot, stBg: sv.bg, stTx: sv.tx,
             prLabel: pv.l, prArrow: pv.ar, prBg: pv.bg, prTx: pv.tx,
             menuOpen: this.state.menuOpen === r.code,
             priOpen: this.state.priMenu === r.code,
-            onKebab: () => this.setState(s => ({ menuOpen: s.menuOpen === r.code ? null : r.code, priMenu: null })),
-            onPriToggle: () => this.setState(s => ({ priMenu: s.priMenu === r.code ? null : r.code, menuOpen: null })),
+            stOpen: this.state.stMenu === r.code,
+            stRot: this.state.stMenu === r.code ? 'rotate(180deg)' : 'rotate(0deg)',
+            onKebab: () => this.setState(s => ({ menuOpen: s.menuOpen === r.code ? null : r.code, priMenu: null, stMenu: null })),
+            onPriToggle: () => this.setState(s => ({ priMenu: s.priMenu === r.code ? null : r.code, menuOpen: null, stMenu: null })),
+            onStToggle: () => this.setState(s => ({ stMenu: s.stMenu === r.code ? null : r.code, priMenu: null, menuOpen: null })),
             onDelete: () => this.setState({ confirmCode: r.code, confirmTitle: r.code + ' — ' + r.title, menuOpen: null }),
             priOpts: ['high', 'med', 'low'].map(k => ({
               label: PR[k].l, arrow: PR[k].ar, tx: PR[k].tx,
               bg: k === pk ? PR[k].bg : 'transparent',
               pick: () => this.setState(s => ({ priOverride: { ...s.priOverride, [r.code]: k }, priMenu: null })),
+            })),
+            stOpts: ['done', 'prog', 'review', 'pend'].map(k => ({
+              label: ST[k].l, dot: ST[k].dot, tx: ST[k].tx, tick: accent,
+              selected: k === sk,
+              weight: k === sk ? 600 : 500,
+              bg: k === sk ? ST[k].bg : 'transparent',
+              pick: () => this.setState(s => ({ stOverride: { ...s.stOverride, [r.code]: k }, stMenu: null })),
             })),
           };
         }),
@@ -728,11 +770,24 @@ class Component extends DCLogic {
         flow: g.flow, accent: g.accent, tint: g.accent + '1A',
         iconEl: this.icon(I[g.icon], g.accent),
         countLabel: items.length + ' รายการ',
-        items: items.map(i => ({
-          code: i.code, title: i.title, desc: i.desc, period: i.period,
-          stLabel: CRST[i.st].l, stSq: CRST[i.st].sq,
-          onDelete: () => this.setState(s => ({ crDeleted: [...s.crDeleted, i.code] })),
-        })),
+        items: items.map(i => {
+          const effSt = this.state.crStatus[i.code] || i.st;
+          return {
+            code: i.code, title: i.title, desc: i.desc, period: i.period,
+            stLabel: CRST[effSt].l, stSq: CRST[effSt].sq,
+            stOpen: this.state.crStMenu === i.code,
+            stRot: this.state.crStMenu === i.code ? 'rotate(180deg)' : 'rotate(0deg)',
+            onStToggle: () => this.setState(s => ({ crStMenu: s.crStMenu === i.code ? null : i.code })),
+            stOpts: ['done', 'prog', 'open', 'block'].map(k => ({
+              label: CRST[k].l, sq: CRST[k].sq, tick: g.accent,
+              selected: k === effSt,
+              weight: k === effSt ? 600 : 500,
+              bg: k === effSt ? (g.accent + '12') : 'transparent',
+              pick: () => this.setState(s => ({ crStatus: { ...s.crStatus, [i.code]: k }, crStMenu: null })),
+            })),
+            onDelete: () => this.setState(s => ({ crDeleted: [...s.crDeleted, i.code] })),
+          };
+        }),
       };
     }).filter(g => g.items.length > 0);
 

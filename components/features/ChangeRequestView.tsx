@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Button, Loader, Popover } from '@mantine/core';
+import { Button, Loader, Menu, Popover } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { Icon } from '@/components/ui/Icon';
-import { type ChangeRequest } from '@/lib/contracts/change-request';
+import { type ChangeRequest, type CrStatus, CR_STATUSES } from '@/lib/contracts/change-request';
 import { CR_STATUS } from '@/lib/ui/palette';
 import { thaiRange, thaiDateTime, toISODate, fromISODate } from '@/lib/ui/date';
 import { useGetChangeRequests, useDeleteChangeRequest, useUpdateChangeRequest } from '@/lib/api/change-requests';
@@ -40,6 +40,16 @@ export function ChangeRequestView() {
       await updateCr.mutateAsync({ id: cr.id, data: { startDate, endDate } });
     } catch {
       notifications.show({ message: 'แก้ไขช่วงเวลาไม่สำเร็จ', color: 'red' });
+    }
+  };
+
+  const onChangeStatus = async (cr: ChangeRequest, status: CrStatus) => {
+    if (status === cr.status) return;
+    try {
+      await updateCr.mutateAsync({ id: cr.id, data: { status } });
+      notifications.show({ message: 'อัปเดตสถานะแล้ว', color: 'green' });
+    } catch {
+      notifications.show({ message: 'อัปเดตสถานะไม่สำเร็จ', color: 'red' });
     }
   };
 
@@ -101,7 +111,6 @@ export function ChangeRequestView() {
             <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <div style={{ minWidth: 870 }}>
             {items.map((i) => {
-              const st = CR_STATUS[i.status];
               return (
                 <div
                   key={i.id}
@@ -112,10 +121,7 @@ export function ChangeRequestView() {
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#1B2138', marginBottom: 3 }}>{i.title}</div>
                     <div style={{ fontSize: 12.5, color: '#7A8298', lineHeight: 1.45 }}>{i.desc}</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #E1E4ED', borderRadius: 8, padding: '7px 11px' }}>
-                    <span style={{ width: 11, height: 11, borderRadius: 3, background: st.sq, flex: '0 0 auto' }} />
-                    <span style={{ fontSize: 12.5, color: '#2B3146', whiteSpace: 'nowrap' }}>{st.label}</span>
-                  </div>
+                  <CrStatusCell cr={i} onChange={onChangeStatus} disabled={updateCr.isPending} />
                   <CrPeriodCell cr={i} onChange={onChangeDates} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 10.5, color: '#AEB5C4', fontWeight: 600 }}>อัปเดตล่าสุด</div>
@@ -147,6 +153,48 @@ export function ChangeRequestView() {
         loading={deleteCr.isPending}
       />
     </div>
+  );
+}
+
+/** Inline status editor: shows the current status, opens a menu of statuses to pick from. */
+function CrStatusCell({
+  cr,
+  onChange,
+  disabled,
+}: {
+  cr: ChangeRequest;
+  onChange: (cr: ChangeRequest, status: CrStatus) => void;
+  disabled?: boolean;
+}) {
+  const st = CR_STATUS[cr.status];
+  return (
+    <Menu position="bottom-start" withinPortal shadow="md" radius="md" width={200} disabled={disabled}>
+      <Menu.Target>
+        <button type="button" style={statusBtn} disabled={disabled}>
+          <span style={{ width: 11, height: 11, borderRadius: 3, background: st.sq, flex: '0 0 auto' }} />
+          <span style={{ fontSize: 12.5, color: '#2B3146', whiteSpace: 'nowrap', flex: 1, textAlign: 'left' }}>{st.label}</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, color: '#5B6478', flex: '0 0 auto' }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      </Menu.Target>
+      <Menu.Dropdown>
+        {CR_STATUSES.map((s) => {
+          const so = CR_STATUS[s];
+          const active = s === cr.status;
+          return (
+            <Menu.Item
+              key={s}
+              onClick={() => onChange(cr, s)}
+              leftSection={<span style={{ width: 11, height: 11, borderRadius: 3, background: so.sq, display: 'inline-block' }} />}
+              style={{ fontSize: 12.5, fontWeight: active ? 700 : 500, background: active ? '#F4F5FA' : undefined }}
+            >
+              {so.label}
+            </Menu.Item>
+          );
+        })}
+      </Menu.Dropdown>
+    </Menu>
   );
 }
 
@@ -199,6 +247,19 @@ function CrPeriodCell({
     </Popover>
   );
 }
+
+const statusBtn: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  width: '100%',
+  border: '1px solid #E1E4ED',
+  borderRadius: 8,
+  padding: '7px 11px',
+  background: '#fff',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+};
 
 const periodBtn: React.CSSProperties = {
   display: 'flex',
