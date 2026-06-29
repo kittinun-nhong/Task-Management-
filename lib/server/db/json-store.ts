@@ -17,9 +17,9 @@ export interface DbShape {
 }
 
 /**
- * Unique per Netlify deploy (baked in at build time via next.config `env`).
- * When the persisted store's `seedVersion` differs, the Blobs store is reset to
- * fresh seed data — i.e. data is cleared on every deploy. Empty locally.
+ * Stamp recorded on the Blobs store the first time it is seeded. It is written
+ * once and never compared again, so deploys do NOT reset live data — rows added
+ * on Netlify persist across pushes. Kept only for diagnostics. Empty locally.
  */
 const SEED_VERSION = process.env.SEED_VERSION || '';
 
@@ -108,10 +108,12 @@ export async function readDb(): Promise<DbShape> {
   if (USE_BLOBS) {
     const store = await blobStore();
     const existing = (await store.get(BLOB_KEY, { type: 'json' })) as DbShape | null;
-    if (existing && existing.seedVersion === SEED_VERSION) {
+    if (existing) {
+      // Keep whatever is already in Blobs — deploys NEVER wipe live data, so the
+      // rows created on Netlify persist across every push.
       db = existing;
     } else {
-      // No store yet, OR a new deploy → clear data by reseeding from scratch.
+      // First run only: the store is empty, so seed it once.
       db = seedData();
       db.seedVersion = SEED_VERSION;
       await store.setJSON(BLOB_KEY, db);

@@ -4,10 +4,10 @@ import { useMemo } from 'react';
 import { Loader } from '@mantine/core';
 import dayjs from 'dayjs';
 import { Icon } from '@/components/ui/Icon';
-import type { Task } from '@/lib/contracts/task';
-import { STATUS } from '@/lib/ui/palette';
+import { STATUS, CR_STATUS } from '@/lib/ui/palette';
 import { THAI_MONTHS_ABBR, thaiRange } from '@/lib/ui/date';
 import { useGetTasks } from '@/lib/api/tasks';
+import { useGetChangeRequests } from '@/lib/api/change-requests';
 import { useGetGroups } from '@/lib/api/groups';
 
 const COL_MIN = 150;
@@ -26,15 +26,41 @@ interface WeekCol {
   range: string;
 }
 
+/** A unified timeline entry — a task OR a change request, both placed by their date range. */
+interface TLItem {
+  key: string;
+  kind: 'task' | 'cr';
+  group: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  dot: string;
+  statusLabel: string;
+}
+
 export function TimelineView({ accent }: { accent: string }) {
   const { data, isFetching } = useGetTasks({ limit: 100, sort: 'createdAt', order: 'asc' });
+  const { data: crData, isFetching: crFetching } = useGetChangeRequests();
   const { data: groups } = useGetGroups();
+  const loading = isFetching || crFetching;
 
-  // Only tasks with a real start–end range live on the timeline.
-  const dated = useMemo(
-    () => (data?.data ?? []).filter((t) => t.startDate && t.endDate),
-    [data],
-  );
+  // Tasks AND change requests with a real start–end range live on the timeline.
+  const dated = useMemo<TLItem[]>(() => {
+    const items: TLItem[] = [];
+    for (const t of data?.data ?? []) {
+      if (t.startDate && t.endDate) {
+        const st = STATUS[t.status];
+        items.push({ key: `t-${t.id}`, kind: 'task', group: t.group, title: t.title, startDate: t.startDate, endDate: t.endDate, dot: st.dot, statusLabel: st.label });
+      }
+    }
+    for (const c of crData?.data ?? []) {
+      if (c.startDate && c.endDate) {
+        const st = CR_STATUS[c.status];
+        items.push({ key: `c-${c.id}`, kind: 'cr', group: c.flow, title: c.title, startDate: c.startDate, endDate: c.endDate, dot: st.sq, statusLabel: st.label });
+      }
+    }
+    return items;
+  }, [data, crData]);
 
   // Build weekly columns spanning the earliest start → latest end across all tasks.
   const { weeks, anchor } = useMemo(() => {
@@ -67,7 +93,7 @@ export function TimelineView({ accent }: { accent: string }) {
   }, [dated]);
 
   const lanes = useMemo(() => {
-    const byGroup = new Map<string, Task[]>();
+    const byGroup = new Map<string, TLItem[]>();
     for (const t of dated) {
       const arr = byGroup.get(t.group) ?? [];
       arr.push(t);
@@ -87,17 +113,17 @@ export function TimelineView({ accent }: { accent: string }) {
   const minWidth = LANE_W + n * COL_MIN;
   const colsTemplate = `repeat(${n},minmax(${COL_MIN}px,1fr))`;
 
-  if (!isFetching && n === 0) {
+  if (!loading && n === 0) {
     return (
       <div style={{ background: '#fff', border: '1px solid #ECEEF3', borderRadius: 16, padding: 40, textAlign: 'center', color: '#9AA1B2' }}>
-        ยังไม่มีงานที่กำหนดช่วงเวลา — เพิ่มหรือแก้ไขช่วงเวลาของงานเพื่อแสดงบนไทม์ไลน์
+        ยังไม่มีงานหรือคำขอเปลี่ยนแปลงที่กำหนดช่วงเวลา — เพิ่มหรือแก้ไขช่วงเวลาเพื่อแสดงบนไทม์ไลน์
       </div>
     );
   }
 
   return (
     <div>
-      {isFetching && (
+      {loading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 16 }}>
           <Loader size="sm" />
         </div>
@@ -138,18 +164,17 @@ export function TimelineView({ accent }: { accent: string }) {
                 </div>
                 <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: colsTemplate, rowGap: 10, alignItems: 'start' }}>
                   {tasks.map((t) => {
-                    const st = STATUS[t.status];
-                    const startCol = colOf(t.startDate!);
-                    const endCol = colOf(t.endDate!);
+                    const startCol = colOf(t.startDate);
+                    const endCol = colOf(t.endDate);
                     return (
                       <div
-                        key={t.id}
+                        key={t.key}
                         style={{
                           gridColumn: `${startCol} / ${endCol + 1}`,
                           margin: '0 8px',
                           background: '#fff',
                           border: '1px solid #EBEDF3',
-                          borderLeft: `3px solid ${st.dot}`,
+                          borderLeft: `3px solid ${t.dot}`,
                           borderRadius: 10,
                           padding: '10px 11px',
                           boxShadow: '0 1px 2px rgba(20,24,40,.05)',
@@ -160,27 +185,34 @@ export function TimelineView({ accent }: { accent: string }) {
                           gap: 9,
                         }}
                       >
-                        <span
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: '#2B3146',
-                            lineHeight: 1.4,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {t.title}
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {t.kind === 'cr' && (
+                            <span style={{ alignSelf: 'flex-start', fontSize: 9.5, fontWeight: 700, color: '#6D4AE0', background: '#EEEAFD', borderRadius: 5, padding: '2px 6px', letterSpacing: 0.2, whiteSpace: 'nowrap' }}>
+                              คำขอเปลี่ยนแปลง
+                            </span>
+                          )}
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: '#2B3146',
+                              lineHeight: 1.4,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {t.title}
+                          </span>
                         </span>
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <span style={{ fontSize: 10.5, color: '#9AA1B2', fontWeight: 600 }}>
                             {thaiRange(t.startDate, t.endDate)}
                           </span>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: '#5B6478' }}>
-                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: st.dot }} />
-                            {st.label}
+                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: t.dot }} />
+                            {t.statusLabel}
                           </span>
                         </span>
                       </div>
