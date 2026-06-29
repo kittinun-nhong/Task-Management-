@@ -66,6 +66,7 @@ function createJsonTaskRepository(): TaskRepository {
           id,
           code: formatCode(id),
           title: input.title,
+          desc: input.desc,
           group: input.group,
           status: input.status ?? 'pend',
           priority: input.priority ?? 'med',

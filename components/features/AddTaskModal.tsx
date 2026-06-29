@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Group, Modal, Select, Stack, TextInput } from '@mantine/core';
+import { Button, Group, Modal, Select, Stack, Textarea, TextInput } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
-import { createTaskSchema, type CreateTaskInput, TASK_STATUSES, TASK_PRIORITIES } from '@/lib/contracts/task';
-import { useCreateTask } from '@/lib/api/tasks';
+import { createTaskSchema, type CreateTaskInput, type Task, TASK_STATUSES, TASK_PRIORITIES } from '@/lib/contracts/task';
+import { useCreateTask, useUpdateTask } from '@/lib/api/tasks';
 import { useGetGroups } from '@/lib/api/groups';
 import { STATUS, PRIORITY } from '@/lib/ui/palette';
 import { toISODate, fromISODate } from '@/lib/ui/date';
@@ -15,8 +15,28 @@ import { toISODate, fromISODate } from '@/lib/ui/date';
 const STATUS_DATA = TASK_STATUSES.map((s) => ({ value: s, label: STATUS[s].label }));
 const PRIORITY_DATA = TASK_PRIORITIES.map((p) => ({ value: p, label: PRIORITY[p].label }));
 
-export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: () => void }) {
-  const { mutateAsync } = useCreateTask();
+const EMPTY: CreateTaskInput = {
+  title: '',
+  desc: '',
+  group: 'foundation',
+  status: 'pend',
+  priority: 'med',
+  startDate: '',
+  endDate: '',
+  owner: 'PMO Team',
+};
+
+export function AddTaskModal({
+  opened,
+  onClose,
+  editing,
+}: {
+  opened: boolean;
+  onClose: () => void;
+  editing?: Task | null;
+}) {
+  const { mutateAsync: createTask } = useCreateTask();
+  const { mutateAsync: updateTask } = useUpdateTask();
   const { data: groups } = useGetGroups();
   const GROUP_DATA = useMemo(() => (groups ?? []).map((g) => ({ value: g.key, label: g.title })), [groups]);
   const {
@@ -29,30 +49,45 @@ export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: ()
     formState: { errors, isSubmitting },
   } = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
-    defaultValues: {
-      title: '',
-      group: 'foundation',
-      status: 'pend',
-      priority: 'med',
-      startDate: '',
-      endDate: '',
-      owner: 'PMO Team',
-    },
+    defaultValues: EMPTY,
   });
+
+  useEffect(() => {
+    if (opened) {
+      reset(
+        editing
+          ? {
+              title: editing.title,
+              desc: editing.desc ?? '',
+              group: editing.group,
+              status: editing.status,
+              priority: editing.priority,
+              startDate: editing.startDate ?? '',
+              endDate: editing.endDate ?? '',
+              owner: editing.owner,
+            }
+          : EMPTY,
+      );
+    }
+  }, [opened, editing, reset]);
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      await mutateAsync(values);
-      notifications.show({ message: 'เพิ่มงานเรียบร้อยแล้ว', color: 'green' });
-      reset();
+      if (editing) {
+        await updateTask({ id: editing.id, data: values });
+        notifications.show({ message: 'บันทึกการแก้ไขแล้ว', color: 'green' });
+      } else {
+        await createTask(values);
+        notifications.show({ message: 'เพิ่มงานเรียบร้อยแล้ว', color: 'green' });
+      }
       onClose();
     } catch {
-      notifications.show({ message: 'ไม่สามารถเพิ่มงานได้', color: 'red' });
+      notifications.show({ message: editing ? 'บันทึกไม่สำเร็จ' : 'ไม่สามารถเพิ่มงานได้', color: 'red' });
     }
   });
 
   return (
-    <Modal opened={opened} onClose={onClose} title="เพิ่มงานใหม่" size="lg" centered radius="lg">
+    <Modal opened={opened} onClose={onClose} title={editing ? 'แก้ไขงาน' : 'เพิ่มงานใหม่'} size="lg" centered radius="lg">
       <form onSubmit={onSubmit}>
         <Stack gap="md">
           <TextInput
@@ -106,12 +141,20 @@ export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: ()
               )}
             />
           </Group>
+          <Textarea
+            label="รายละเอียด (Detail)"
+            placeholder="อธิบายรายละเอียดของงาน..."
+            minRows={4}
+            autosize
+            error={errors.desc?.message}
+            {...register('desc')}
+          />
           <Group justify="flex-end" mt="sm">
             <Button variant="default" onClick={onClose}>
               ยกเลิก
             </Button>
             <Button type="submit" loading={isSubmitting}>
-              เพิ่มงาน
+              {editing ? 'บันทึก' : 'เพิ่มงาน'}
             </Button>
           </Group>
         </Stack>

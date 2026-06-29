@@ -6,8 +6,10 @@ export const CR_STATUSES = ['done', 'prog', 'open', 'block'] as const;
 export const crStatusSchema = z.enum(CR_STATUSES);
 export type CrStatus = z.infer<typeof crStatusSchema>;
 
-/** Preset ช่วงเวลา (period) options — shared by the add/edit form and inline editing. */
+/** Preset ช่วงเวลา (period) options — kept only to migrate legacy `period` labels to dates. */
 export const CR_PERIODS = ['ไม่ระบุ', 'มิ.ย.', 'ก.ค. w1', 'ก.ค. w2', 'ก.ค. w3', 'ก.ค. w4', 'ส.ค. w1', 'ส.ค. w2'] as const;
+
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'รูปแบบวันที่ไม่ถูกต้อง');
 
 /** Response shape the API returns. */
 export const changeRequestSchema = z.object({
@@ -17,25 +19,37 @@ export const changeRequestSchema = z.object({
   desc: z.string(),
   flow: groupKeySchema,
   status: crStatusSchema,
-  period: z.string(),
+  /** ช่วงเวลา start/end dates (`YYYY-MM-DD`) — same range model as tasks. */
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
+  /** @deprecated legacy preset period label — kept for back-compat / migration. */
+  period: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   deletedAt: z.string().nullable().optional(),
 });
 export type ChangeRequest = z.infer<typeof changeRequestSchema>;
 
-/** Create request — the ONE schema validated on the server AND resolved by the form. */
-export const createChangeRequestSchema = z.object({
+const endNotBeforeStart = (d: { startDate?: string | null; endDate?: string | null }) =>
+  !d.startDate || !d.endDate || d.endDate >= d.startDate;
+const rangeError = { message: 'วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น', path: ['endDate'] };
+
+const crMutableFields = z.object({
   title: z.string().min(1, 'กรุณาระบุหัวข้อ').max(200),
   desc: z.string().min(1, 'กรุณาระบุรายละเอียด'),
   flow: groupKeySchema,
   status: crStatusSchema.default('open'),
-  period: z.string().min(1, 'กรุณาระบุช่วงเวลา').default('ไม่ระบุ'),
+  // Optional so a CR can be left without a date range (renders as "—").
+  startDate: isoDateSchema.nullable().optional(),
+  endDate: isoDateSchema.nullable().optional(),
 });
+
+/** Create request — the ONE schema validated on the server AND resolved by the form. */
+export const createChangeRequestSchema = crMutableFields.refine(endNotBeforeStart, rangeError);
 export type CreateChangeRequestInput = z.infer<typeof createChangeRequestSchema>;
 
-/** Update — derived. */
-export const updateChangeRequestSchema = createChangeRequestSchema.partial();
+/** Update — derived, every field optional, same range rule when both are present. */
+export const updateChangeRequestSchema = crMutableFields.partial().refine(endNotBeforeStart, rangeError);
 export type UpdateChangeRequestInput = z.infer<typeof updateChangeRequestSchema>;
 
 /** Query / pagination contract for the change-request list endpoint. */

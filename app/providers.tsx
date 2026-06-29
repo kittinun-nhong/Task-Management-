@@ -2,8 +2,10 @@
 
 import { useState, type ReactNode } from 'react';
 import { MantineProvider, createTheme } from '@mantine/core';
+import { DatesProvider } from '@mantine/dates';
 import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import 'dayjs/locale/th';
 import { ACCENT } from '@/lib/ui/palette';
 
 const theme = createTheme({
@@ -25,8 +27,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
-        <Notifications position="top-right" color={ACCENT} />
-        {children}
+        <DatesProvider settings={{ locale: 'th' }}>
+          <Notifications position="top-right" color={ACCENT} />
+          {children}
+        </DatesProvider>
       </MantineProvider>
     </QueryClientProvider>
   );

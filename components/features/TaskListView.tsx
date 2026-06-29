@@ -20,6 +20,7 @@ import { thaiRange, toISODate, fromISODate } from '@/lib/ui/date';
 import { useGetTasks, useUpdateTask, useDeleteTask } from '@/lib/api/tasks';
 import { useGetGroups, useDeleteGroup } from '@/lib/api/groups';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { AddTaskModal } from './AddTaskModal';
 
 const PER_PAGE = 10;
 
@@ -36,6 +37,7 @@ export function TaskListView({ accent }: { accent: string }) {
   const [pages, setPages] = useState<Record<string, number>>({});
   const [confirm, setConfirm] = useState<Task | null>(null);
   const [confirmGroup, setConfirmGroup] = useState<{ meta: Group; count: number } | null>(null);
+  const [editing, setEditing] = useState<Task | null>(null);
 
   const { data, isFetching } = useGetTasks({
     limit: 100,
@@ -173,13 +175,11 @@ export function TaskListView({ accent }: { accent: string }) {
               {/* group header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
                 <div style={iconBox(meta.accent)}>
-                  <Icon path={meta.icon} color={meta.accent} />
+                  <Icon path={meta.icon} color={meta.accent} size={17} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#1B2138' }}>{meta.title}</div>
-                  <div style={{ fontSize: 12.5, color: '#9AA1B2', marginTop: 1 }}>
-                    <strong style={{ color: '#5B6478', fontWeight: 600 }}>{rows.length}</strong> รายการ
-                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1B2138' }}>{meta.title}</div>
+                  <div style={{ fontSize: 12, color: meta.accent, fontWeight: 600, marginTop: 1 }}>{rows.length} รายการ</div>
                 </div>
                 <Menu position="bottom-end" withinPortal shadow="md">
                   <Menu.Target>
@@ -199,33 +199,25 @@ export function TaskListView({ accent }: { accent: string }) {
                 </Menu>
               </div>
 
-              {/* table header */}
-              <div style={{ ...rowGrid, padding: '8px 4px', borderBottom: '1px solid #F0F1F6', fontSize: 12, fontWeight: 600, color: '#9AA1B2' }}>
-                <div>รหัส</div>
-                <div>หัวข้อ</div>
-                <div>สถานะ</div>
-                <div>ความสำคัญ</div>
-                <div>ช่วงเวลา</div>
-                <div>ผู้รับผิดชอบ</div>
-                <div />
-              </div>
-
               {/* rows */}
               {pageRows.map((r) => {
                 const st = STATUS[r.status];
                 const pr = PRIORITY[r.priority];
                 return (
-                  <div key={r.id} style={{ ...rowGrid, padding: '14px 4px', borderBottom: '1px solid #F4F5F8', alignItems: 'center' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: meta.accent }}>{r.code}</div>
-                    <div style={{ fontSize: 13.5, color: '#2B3146', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {r.title}
+                  <div key={r.id} style={{ ...rowGrid, padding: '15px 4px', borderTop: '1px solid #F1F2F7', alignItems: 'center' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: '#9AA1B2', letterSpacing: 0.3 }}>{r.code}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#1B2138', marginBottom: r.desc ? 3 : 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {r.title}
+                      </div>
+                      {r.desc && <div style={{ fontSize: 12.5, color: '#7A8298', lineHeight: 1.45 }}>{r.desc}</div>}
                     </div>
                     <div>
                       <Menu position="bottom-start" withinPortal shadow="md">
                         <Menu.Target>
-                          <button style={statusBadge(st.bg, st.tx)}>
-                            <span style={dot(st.dot)} />
-                            {st.label}
+                          <button style={cellBox}>
+                            <span style={square(st.dot)} />
+                            <span style={{ flex: 1, fontSize: 12.5, color: '#2B3146', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{st.label}</span>
                             <Caret />
                           </button>
                         </Menu.Target>
@@ -264,25 +256,13 @@ export function TaskListView({ accent }: { accent: string }) {
                     <div>
                       <PeriodCell task={r} onChange={onChangeDates} />
                     </div>
-                    <div style={{ fontSize: 13, color: '#4B5468' }}>{r.owner}</div>
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <Menu position="bottom-end" withinPortal shadow="md">
-                        <Menu.Target>
-                          <button style={kebabBtn}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <circle cx="12" cy="5" r="1.7" />
-                              <circle cx="12" cy="12" r="1.7" />
-                              <circle cx="12" cy="19" r="1.7" />
-                            </svg>
-                          </button>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          <Menu.Item color="red" onClick={() => setConfirm(r)}>
-                            ลบรายการ
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                    </div>
+                    <div style={{ fontSize: 13, color: '#4B5468', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.owner}</div>
+                    <button onClick={() => setEditing(r)} style={editBtn}>
+                      แก้ไข
+                    </button>
+                    <button onClick={() => setConfirm(r)} style={delBtn}>
+                      ลบ
+                    </button>
                   </div>
                 );
               })}
@@ -310,6 +290,8 @@ export function TaskListView({ accent }: { accent: string }) {
           );
         })}
       </div>
+
+      <AddTaskModal opened={!!editing} editing={editing} onClose={() => setEditing(null)} />
 
       <ConfirmDialog
         opened={!!confirm}
@@ -377,7 +359,7 @@ function PeriodCell({
     >
       <Popover.Target>
         <button type="button" style={periodBtn} onClick={() => (opened ? close() : handleOpen())}>
-          {thaiRange(task.startDate, task.endDate)}
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{thaiRange(task.startDate, task.endDate)}</span>
           <Caret />
         </button>
       </Popover.Target>
@@ -429,9 +411,9 @@ const card = (accent: string): React.CSSProperties => ({
 });
 
 const iconBox = (accent: string): React.CSSProperties => ({
-  width: 38,
-  height: 38,
-  borderRadius: 11,
+  width: 34,
+  height: 34,
+  borderRadius: 10,
   background: accent + '1A',
   display: 'flex',
   alignItems: 'center',
@@ -440,26 +422,51 @@ const iconBox = (accent: string): React.CSSProperties => ({
 
 const rowGrid: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '100px minmax(0,1fr) 160px 130px 150px 110px 26px',
+  gridTemplateColumns: '90px minmax(0,1fr) 170px 120px 160px 110px auto auto',
   gap: 12,
 };
 
-const statusBadge = (bg: string, tx: string): React.CSSProperties => ({
-  display: 'inline-flex',
+/** Neutral bordered cell box (status / period) — matches the คำขอเปลี่ยนแปลง table. */
+const cellBox: React.CSSProperties = {
+  display: 'flex',
   alignItems: 'center',
-  gap: 7,
-  padding: '4px 10px',
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 600,
-  background: bg,
-  color: tx,
-  border: 'none',
+  gap: 8,
+  width: '100%',
+  border: '1px solid #E1E4ED',
+  borderRadius: 8,
+  padding: '7px 11px',
+  background: '#fff',
   cursor: 'pointer',
   fontFamily: 'inherit',
-});
+};
+
+const square = (c: string): React.CSSProperties => ({ width: 11, height: 11, borderRadius: 3, background: c, flex: '0 0 auto' });
 
 const dot = (c: string): React.CSSProperties => ({ width: 7, height: 7, borderRadius: '50%', background: c });
+
+const editBtn: React.CSSProperties = {
+  background: '#fff',
+  border: '1px solid #E1E4ED',
+  borderRadius: 8,
+  padding: '8px 14px',
+  fontFamily: 'inherit',
+  fontSize: 12.5,
+  fontWeight: 600,
+  color: '#4B5468',
+  cursor: 'pointer',
+};
+
+const delBtn: React.CSSProperties = {
+  background: '#fff',
+  border: '1px solid #F1D4D4',
+  borderRadius: 8,
+  padding: '8px 14px',
+  fontFamily: 'inherit',
+  fontSize: 12.5,
+  fontWeight: 600,
+  color: '#DC2626',
+  cursor: 'pointer',
+};
 
 const priorityBtn = (bg: string, tx: string): React.CSSProperties => ({
   display: 'inline-flex',
@@ -477,20 +484,19 @@ const priorityBtn = (bg: string, tx: string): React.CSSProperties => ({
 });
 
 const periodBtn: React.CSSProperties = {
-  display: 'inline-flex',
+  display: 'flex',
   alignItems: 'center',
-  gap: 5,
-  padding: '4px 9px',
+  justifyContent: 'space-between',
+  gap: 8,
+  width: '100%',
+  border: '1px solid #E1E4ED',
   borderRadius: 8,
-  fontSize: 13,
-  fontWeight: 500,
+  padding: '7px 11px',
+  fontSize: 12.5,
   background: '#fff',
-  color: '#4B5468',
-  border: '1px solid #E4E7EF',
+  color: '#2B3146',
   cursor: 'pointer',
   fontFamily: 'inherit',
-  maxWidth: '100%',
-  whiteSpace: 'nowrap',
 };
 
 const kebabBtn: React.CSSProperties = {

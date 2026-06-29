@@ -19,6 +19,7 @@ export const taskSchema = z.object({
   id: z.number().int().positive(),
   code: z.string(),
   title: z.string(),
+  desc: z.string().optional(),
   group: groupKeySchema,
   status: taskStatusSchema,
   priority: taskPrioritySchema,
@@ -38,6 +39,7 @@ export type Task = z.infer<typeof taskSchema>;
 /** Mutable fields shared by create + update (so the date-range rule lives in one place). */
 const taskMutableFields = z.object({
   title: z.string().min(1, 'กรุณาระบุชื่องาน').max(200),
+  desc: z.string().min(1, 'กรุณาระบุรายละเอียด'),
   group: groupKeySchema,
   status: taskStatusSchema.default('pend'),
   priority: taskPrioritySchema.default('med'),

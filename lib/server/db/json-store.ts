@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { Task } from '@/lib/contracts/task';
 import type { ChangeRequest } from '@/lib/contracts/change-request';
 import type { Group } from '@/lib/contracts/groups';
-import { seedData, seedGroups, legacyWeekRange } from './seed';
+import { seedData, seedGroups, legacyWeekRange, legacyPeriodRange } from './seed';
 
 /** The full on-disk database shape. */
 export interface DbShape {
@@ -47,6 +47,15 @@ function normalize(db: DbShape): boolean {
       const [startDate, endDate] = legacyWeekRange(t.week);
       t.startDate = startDate;
       t.endDate = endDate;
+      changed = true;
+    }
+  }
+  // Backfill change-request ช่วงเวลา dates from the legacy `period` label.
+  for (const c of db.changeRequests ?? []) {
+    if (c.startDate === undefined || c.endDate === undefined) {
+      const [startDate, endDate] = legacyPeriodRange(c.period);
+      c.startDate = startDate;
+      c.endDate = endDate;
       changed = true;
     }
   }

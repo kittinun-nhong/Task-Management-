@@ -4,20 +4,20 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Group, Modal, Select, Stack, Textarea, TextInput } from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import {
   createChangeRequestSchema,
   type CreateChangeRequestInput,
   type ChangeRequest,
   CR_STATUSES,
-  CR_PERIODS,
 } from '@/lib/contracts/change-request';
 import { useCreateChangeRequest, useUpdateChangeRequest } from '@/lib/api/change-requests';
 import { useGetGroups } from '@/lib/api/groups';
 import { CR_STATUS } from '@/lib/ui/palette';
+import { toISODate, fromISODate } from '@/lib/ui/date';
 
 const STATUS_DATA = CR_STATUSES.map((s) => ({ value: s, label: CR_STATUS[s].label }));
-const PERIOD_DATA = CR_PERIODS.map((v) => ({ value: v, label: v }));
 
 export function ChangeRequestModal({
   opened,
@@ -38,10 +38,12 @@ export function ChangeRequestModal({
     handleSubmit,
     control,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateChangeRequestInput>({
     resolver: zodResolver(createChangeRequestSchema),
-    defaultValues: { title: '', desc: '', flow: 'foundation', status: 'open', period: 'ไม่ระบุ' },
+    defaultValues: { title: '', desc: '', flow: 'foundation', status: 'open', startDate: null, endDate: null },
   });
 
   useEffect(() => {
@@ -53,9 +55,10 @@ export function ChangeRequestModal({
               desc: editing.desc,
               flow: editing.flow,
               status: editing.status,
-              period: editing.period,
+              startDate: editing.startDate ?? null,
+              endDate: editing.endDate ?? null,
             }
-          : { title: '', desc: '', flow: 'foundation', status: 'open', period: 'ไม่ระบุ' },
+          : { title: '', desc: '', flow: 'foundation', status: 'open', startDate: null, endDate: null },
       );
     }
   }, [opened, editing, reset]);
@@ -110,15 +113,21 @@ export function ChangeRequestModal({
           </Group>
           <Controller
             control={control}
-            name="period"
-            render={({ field }) => (
-              <Select
-                label="ช่วงเวลา (เดือน/สัปดาห์)"
-                data={PERIOD_DATA}
-                value={field.value}
-                onChange={(v) => field.onChange(v)}
-                searchable
-                allowDeselect={false}
+            name="startDate"
+            render={() => (
+              <DatePickerInput
+                type="range"
+                label="ช่วงเวลา"
+                placeholder="เลือกวันเริ่มต้น – วันสิ้นสุด"
+                valueFormat="D MMM YYYY"
+                value={[fromISODate(watch('startDate')), fromISODate(watch('endDate'))]}
+                onChange={([start, end]) => {
+                  setValue('startDate', toISODate(start), { shouldValidate: true });
+                  setValue('endDate', toISODate(end), { shouldValidate: true });
+                }}
+                error={errors.startDate?.message ?? errors.endDate?.message}
+                popoverProps={{ withinPortal: true }}
+                clearable
                 w="50%"
               />
             )}
